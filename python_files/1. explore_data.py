@@ -14,14 +14,6 @@
 
 # %% [markdown]
 # # Explore the Midwest Survey dataset
-#
-# In this notebook, we will explore the **Midwest Survey** dataset from [skrub](https://skrub-data.org/).
-#
-# This dataset contains survey responses from people across the United States,
-# asking them about their perception of the Midwest region.
-#
-# The goal is to predict the **Census Region** where a respondent lives,
-# based on their survey answers.
 
 # %% [markdown]
 # ## Load the dataset
@@ -31,19 +23,16 @@ from skrub.datasets import fetch_midwest_survey
 
 dataset = fetch_midwest_survey()
 
-# X contains the features (the survey answers)
 X = dataset.X
-# y contains the target (the Census Region)
 y = dataset.y
 
 # %% [markdown]
 # ## Question 1: How many examples are there in the dataset?
-#
-# Use the `.shape` attribute to find out the number of rows and columns.
 
 # %%
 # Display the number of rows and columns
-
+print(f"Rows (examples): {X.shape[0]}")
+print(f"Columns (features): {X.shape[1]}")
 
 # %%
 # You can also look at the first few rows of the dataset
@@ -51,39 +40,44 @@ X.head()
 
 # %% [markdown]
 # ## Question 2: What is the distribution of the target?
-#
-# The target variable `y` tells us the Census Region of each respondent.
-# Let's see how many respondents belong to each region.
 
 # %%
 # Count how many respondents belong to each region
-
+print(y.value_counts())
 
 # %%
 # Visualize the target distribution with a bar plot
-# hint: use barh
+import matplotlib.pyplot as plt
 
+y.value_counts().plot(kind="barh")
+plt.xlabel("Number of respondents")
+plt.ylabel("Census Region")
+plt.title("Distribution of Census Regions")
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
-# Is the target balanced (roughly the same number of examples per class) or imbalanced?
+# La cible est **déséquilibrée** : certaines régions ont beaucoup plus de répondants que d'autres.
 
 # %% [markdown]
 # ## Question 3: What are the features that can be used to predict the target?
-#
-# Let's look at the column names and their data types.
 
 # %%
 # List all column names
-
+print(X.columns.tolist())
 
 # %%
 # Show data types for each column
-
+print(X.dtypes)
 
 # %% [markdown]
-# How many features are numerical? How many are categorical (text)?
+# La plupart des colonnes sont de type **object** (catégoriel/texte).
+# Peu ou pas de colonnes numériques.
 
 # %%
+# Compter les types
+print("Numerical:", (X.dtypes != "object").sum())
+print("Categorical:", (X.dtypes == "object").sum())
 
 # %%
 from skrub import TableReport
@@ -91,48 +85,49 @@ TableReport(X)
 
 # %% [markdown]
 # ## Question 4: Are there any missing values in the dataset?
-#
-# Missing values can cause problems for machine learning models.
-# Let's check if there are any.
 
 # %%
 # Check for NaN missing values
-
+print(X.isna().sum())
+print(f"\nTotal NaN: {X.isna().sum().sum()}")
 
 # %% [markdown]
-# Missing values can sometimes be encoded differently. Let's look at some columns more closely.
+# Les NaN classiques sont peu nombreux, mais certaines colonnes encodent les valeurs manquantes autrement.
 
 # %%
 # Look at unique values for the Household_Income column
-# #X["Household_Income"].??
+print(X["Household_Income"].unique())
 
 # %%
 # Look at unique values for the Education column
+print(X["Education"].unique())
 
 # %% [markdown]
-# Do you see a special value that could represent missing data?
+# On voit la valeur **"Prefer not to answer"** qui représente des données manquantes "cachées".
 
 # %% [markdown]
 # ## Question 5: What is the most common answer to "How much do you personally identify as a Midwesterner"?
-#
-# Let's explore this important feature.
 
 # %%
-# TODO: display the value counts for the column
-# "How_much_do_you_personally_identify_as_a_Midwesterner"
-
+# Display the value counts for the column
+col = "How_much_do_you_personally_identify_as_a_Midwesterner"
+print(X[col].value_counts())
 
 # %%
-# TODO: make a bar plot of the results
-
+# Make a bar plot of the results
+X[col].value_counts().plot(kind="barh")
+plt.xlabel("Number of respondents")
+plt.title("How much do you identify as a Midwesterner?")
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
-# ## Bonus: Explore another feature
-#
-# Pick another column and explore its distribution.
-# For example: `Gender`, `Age`, or one of the
-# "Do you consider X state as part of the Midwest" columns.
+# ## Bonus: Explore another feature — Age
 
 # %%
-# TODO: explore a column of your choice
-
+# Distribution de l'âge des répondants
+X["Age"].value_counts().plot(kind="barh")
+plt.xlabel("Number of respondents")
+plt.title("Age distribution")
+plt.tight_layout()
+plt.show()
