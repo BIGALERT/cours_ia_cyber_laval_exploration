@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
 #   kernelspec:
-#     display_name: Python (pixi)
+#     display_name: .venv (3.11.0)
 #     language: python
-#     name: cours_ia_cyber_laval_exploration
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -109,8 +109,21 @@ report.help()
 # %%
 report.metrics.summarize(pos_label="North Central").frame()
 
+# %%
+
 # %% [markdown]
-# Which model has the highest recall?
+# Which model has the highest recall? On vient dupliquer le code dans une boucle pour tester le report des 3 modèles : 
+
+# %%
+from skore import EstimatorReport
+
+for name, model in [("Logistic Regression", model_lr), 
+                    ("Random Forest", model_rf), 
+                    ("Gradient Boosting", model_gb)]:
+    report = EstimatorReport(estimator=model, X_test=X_test, y_test=y_test)
+    print(f"\n--- {name} ---")
+    print(report.metrics.summarize(pos_label="North Central").frame())
+
 
 # %% [markdown]
 # ## Question 7: Which model has the best practical application?
@@ -118,9 +131,20 @@ report.metrics.summarize(pos_label="North Central").frame()
 # Let's say that it costs 10 to make a false positive error, while it costs 1 to make a false negative error. Correctly predicting a positive example gains 5, while correctly predicting a negative example gains 2.
 
 # %%
+from sklearn.metrics import confusion_matrix
+
+for name, model in [("Logistic Regression", model_lr), 
+                    ("Random Forest", model_rf), 
+                    ("Gradient Boosting", model_gb)]:
+    y_pred = model.predict(X_test)
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=["other", "North Central"]).ravel()
+    score = tp * 5 + tn * 2 - fp * 10 - fn * 1
+    print(f"{name}: score = {score}  (TP={tp}, TN={tn}, FP={fp}, FN={fn})")
+
 
 # %% [markdown]
 # Which model makes the most meaningful predictions in practice?
+# LE Gradient Boosting a le meilleur score.
 
 # %% [markdown]
 # ## Question 8: Which model generalizes the best?
@@ -132,17 +156,37 @@ report.metrics.summarize(pos_label="North Central").frame()
 # We don't want to do this only once, but several times. Use cross-validation for that. You can either use cross-validation from scikit-learn, or the CrossValidationReport from skore.
 
 # %%
+from sklearn.model_selection import cross_validate
+
+for name, model in [("Logistic Regression", model_lr), 
+                    ("Random Forest", model_rf), 
+                    ("Gradient Boosting", model_gb)]:
+    cv = cross_validate(model, X, y, cv=5, return_train_score=True)
+    train = cv["train_score"].mean()
+    test = cv["test_score"].mean()
+    gap = train - test
+    print(f"{name}: train={train:.3f}, test={test:.3f}, gap={gap:.3f}")
+
 
 # %% [markdown]
 # Which model has the smallest gap between train and test accuracy?
 # That model generalizes the best.
 #
+# Le plus petit gap est celui de Logisitic Regretion avec un gap de 0.000
+#
 # Which model has the largest gap? That model is likely **overfitting**.
+
+# %% [markdown]
+# Le Gradient Boosting est en overfitting.
 
 # %%
 # TODO: Based on the results above, which model would you choose
 # for a real application? Write your answer as a comment below.
 
-# My choice: ...
-# Reason: ...
+# My choice: Gradient Boosting  ← (ou celui qui a le meilleur score Q7)
+# Reason: It achieves the best business score given the cost matrix 
+# (FP=10, FN=1, TP=+5, TN=+2), meaning it minimizes costly false positives.
+# Its train/test gap in cross-validation is acceptable, showing it generalizes
+# well enough for production use.
+
 
